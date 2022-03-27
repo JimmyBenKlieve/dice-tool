@@ -19,32 +19,37 @@ export type BinaryModifierOperator = '+' | '-' | '*' | '/' | '%';
 export type UnaryModifierOperator = '~';
 export type ModifierOperator = BinaryModifierOperator | UnaryModifierOperator;
 
-export type BinaryModifier = [BinaryModifierOperator, number];
-export type UnaryModifier = [UnaryModifierOperator];
+export type BinaryModifier = {
+  op: BinaryModifierOperator;
+  value: number;
+}
+
+export type UnaryModifier = {
+  op: UnaryModifierOperator;
+};
+
 export type Modifier = BinaryModifier | UnaryModifier;
 
-// Assert
+type RangeSetOperator = '==' | '!=';
+type CompareOperator = '<' | '<=' | '==' | '!=' | '>' | '>=';
 
 export declare interface RangeAssert {
   type: 'range';
-  range: {
-    left: {
-      value: number,
-      closed:  number,
-    },
-    right: {
-      value: number,
-      closed: number,
-    },
-  };
+  op: RangeSetOperator;
+  values: [number, number];
+  closed: [boolean, boolean];
 }
+
+declare interface GeneralTermFormula {
+  a: number,
+  k: number,
+};
 
 export declare interface SetAssert {
   type: 'set';
-  values: number[];
+  op: RangeSetOperator;
+  values: number[] | [GeneralTermFormula, ...number[]];
 }
-
-type CompareOperator = '<' | '<=' | '==' | '!=' | '>' | '>=';
 
 export declare interface CompareAssert {
   type: 'compare';

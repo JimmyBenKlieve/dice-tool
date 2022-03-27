@@ -62,14 +62,7 @@ Dice
   }
 
 Modifiers
-  = mods:(Modifier+) {
-    return Object.assign(
-      mods,
-      {
-        text: text(),
-      },
-    );
-  }
+  = Modifier+
 
 Modifier
   = BinaryModifier
@@ -89,25 +82,17 @@ Assert
   = RangeAssert / SetAssert / CompareAssert
 
 RangeAssert
-  = op:RangeSetOperator lc:("[" / "(") lb:Integer "," rb:Integer rc:("]" / ")") {
+  = op:RangeSetOperator lParen:("[" / "(") lb:Integer "," rb:Integer rParen:("]" / ")") {
     return {
       type: 'range',
       op,
-      range: {
-        left: {
-          value: lb,
-          closed: lc === '[',
-        },
-        right: {
-          value: rb,
-          closed: rc === ']',
-        },
-      },
+      values: [lb, rb],
+      closed: [lParen === '[', rParen === ']'],
     };
   }
 
 SetAssert
-  = op:RangeSetOperator "{" items:IntegerCommaList "}" {
+  = op:RangeSetOperator "{" values:SetElementCommaList "}" {
     return {
       type: 'set',
       op,
@@ -150,9 +135,30 @@ AggregatorParamList
       .filter((x) => x !== ' ');
   }
 
+SetElementCommaList
+  = s:(GeneralTermFormula / Integer) r:("," Integer)* {
+    return [s, ...r].flat(Infinity).filter((x) => x != ',');
+  }
+
 IntegerCommaList
   = s:Integer r:("," Integer)* {
     return [s, ...r].flat(Infinity).filter((x) => x != ',');
+  }
+
+GeneralTermFormula
+  = a:PositiveInteger [a-z] r:(sign:[+-] k:PositiveInteger)? {
+    if (a <= 1) {
+      throw new SyntaxError('Multiplier must be greater than 1');
+    }
+
+    if (r?.k != null && (r.k <= -a || r.k >= a)) {
+      throw new SyntaxError(`Offset must be greater than ${-a} and less than ${a}`);
+    }
+
+    return {
+      a,
+      k: (r?.k ?? 0) * (r?.sign === '-' ? -1 : 1),
+    };
   }
 
 Number
